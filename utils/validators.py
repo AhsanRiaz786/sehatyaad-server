@@ -1,6 +1,6 @@
 from werkzeug.datastructures import FileStorage
 from config import Config
-import imghdr
+from PIL import Image
 
 
 def validate_image_file(file: FileStorage) -> tuple[bool, str]:
@@ -27,13 +27,13 @@ def validate_image_file(file: FileStorage) -> tuple[bool, str]:
     else:
         return False, "File has no extension"
     
-    # Verify it's actually an image
-    file.seek(0)
-    header = file.read(512)
-    file.seek(0)
-    
-    format_type = imghdr.what(None, header)
-    if format_type not in ['png', 'jpeg', 'gif']:
+    # Verify it's actually an image using Pillow
+    try:
+        file.seek(0)
+        img = Image.open(file)
+        img.verify()  # type: ignore[attr-defined]
+        file.seek(0)
+    except Exception:
         return False, "File is not a valid image"
     
     return True, ""
