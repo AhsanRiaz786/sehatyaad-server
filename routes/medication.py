@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from services.gemini_service import process_prescription_image
+from services.gemini_service import process_prescription_image, process_prescription_text
 from utils.validators import validate_image_file, get_mime_type
 import logging
 import asyncio
@@ -72,4 +72,62 @@ def process_medication_image_endpoint():
         return jsonify({
             'success': False,
             'error': 'Failed to process prescription image. Please try again.'
+        }), 500
+
+
+@medication_bp.route('/process-medication-text', methods=['POST'])
+def process_medication_text_endpoint():
+    """
+    Process a natural language prescription description and extract medication data.
+
+    Expected JSON body:
+    {
+        "text": "I take 500mg Metformin every morning after breakfast"
+    }
+
+    Returns:
+        JSON with extracted medication data (same format as image endpoint)
+    """
+    try:
+        logger.info("📝 Received prescription text processing request")
+
+        if not request.is_json:
+            logger.warning("❌ Request content type is not JSON")
+            return jsonify({
+                'success': False,
+                'error': 'Request must be JSON with a "text" field'
+            }), 400
+
+        data = request.get_json(silent=True) or {}
+        text = data.get('text', '')
+
+        if not text or not text.strip():
+            logger.warning("❌ No text provided in request")
+            return jsonify({
+                'success': False,
+                'error': 'Text is required'
+            }), 400
+
+        # Process with Gemini (text)
+        result = process_prescription_text(text)
+
+        logger.info("✅ Successfully processed prescription text")
+
+        return jsonify({
+            'success': True,
+            'data': result
+        }), 200
+
+    except ValueError as e:
+        logger.error(f"Validation error (text): {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
+
+    except Exception as e:
+        logger.error(f"❌ Text processing error: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to process prescription text. Please try again.'
         }), 500
