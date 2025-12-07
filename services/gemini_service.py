@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 # Configure Gemini API
 genai.configure(api_key=Config.GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-2.5-pro')
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 GEMINI_IMAGE_PROMPT = """
 You are an expert medical prescription analyzer with deep knowledge of:
